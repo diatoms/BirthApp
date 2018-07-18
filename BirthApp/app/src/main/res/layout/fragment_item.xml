@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_marginTop="5dp"
+    android:layout_width="wrap_content"
+    android:layout_height="70dp"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:id="@+id/user_img"
+        android:layout_height="70dp"
+        android:layout_width="70dp"
+        android:src="@drawable/ic_launcher_background"
+    />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/name_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="名前"
+            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/date_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:text="XXXX年YY月ZZ日"
+            android:textSize="12dp"
+            android:textAppearance="?attr/textAppearanceListItem" />
+        <TextView
+            android:id="@+id/age_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="○○歳"
+            android:layout_gravity="center_vertical" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/daysleft_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="50dp"
+        android:text="○○日後"
+        android:layout_gravity="center_vertical"
+        />
+</LinearLayout>
