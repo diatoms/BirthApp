@@ -6,11 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-
-
 import com.iwa.birthapp2.ItemFragment.OnListFragmentInteractionListener
 import com.iwa.birthapp2.Content.ProfileItem
-
 import kotlinx.android.synthetic.main.fragment_item.view.*
 
 /**
@@ -24,13 +21,14 @@ class MyItemRecyclerViewAdapter(
     : RecyclerView.Adapter<MyItemRecyclerViewAdapter.ViewHolder>() {
 
     private val mOnClickListener: View.OnClickListener
+    private val nameList = arrayOf("田中","山田","佐藤")
+    private val dateList = arrayOf("1980年05月14日","1970年08月31日","1989年02月04日")
 
     init {
         mOnClickListener = View.OnClickListener { v ->
-            val item = v.tag as ProfileItem
-            // Notify the active callbacks interface (the activity, if the fragment is attached to
-            // one) that an item has been selected.
-            mListener?.onListFragmentInteraction(item)
+            //TODO 編集画面を起動
+//            val item = v.tag as ProfileItem
+//            mListener?.onListFragmentInteraction(item)
         }
     }
 
@@ -42,14 +40,8 @@ class MyItemRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = mValue[position]
-//        holder.mImager = item.
-//        holder.mTextName
-//        holder.mTextDate
-//        holder.mTextAge
-//        holder.mTextLeft
-//
-//        holder.mIdView.text = item.id
-//        holder.mContentView.text = item.content
+        holder.mTextName.text = nameList[position]
+        holder.mTextDate.text = dateList[position]
 
         with(holder.mView) {
             tag = item
@@ -65,9 +57,5 @@ class MyItemRecyclerViewAdapter(
         val mTextDate: TextView = mView.date_text
         val mTextAge: TextView = mView.age_text
         val mTextLeft: TextView = mView.daysleft_text
-
-//        override fun toString(): String {
-//            return super.toString() + " '" + mContentView.text + "'"
-//        }
     }
 }

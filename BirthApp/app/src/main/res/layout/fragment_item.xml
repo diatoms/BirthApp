@@ -32,7 +32,7 @@
             android:id="@+id/date_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="20dp"
+            android:layout_marginLeft="10dp"
             android:text="XXXX年YY月ZZ日"
             android:textSize="12dp"
             android:textAppearance="?attr/textAppearanceListItem" />
@@ -50,7 +50,7 @@
         android:id="@+id/daysleft_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="50dp"
+        android:layout_marginLeft="30dp"
         android:text="○○日後"
         android:layout_gravity="center_vertical"
         />
