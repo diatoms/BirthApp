@@ -9,14 +9,15 @@ import android.support.v4.app.FragmentTransaction
 import android.view.Menu
 import android.view.MenuItem
 
+
 class MainActivity : AppCompatActivity(), ItemFragment.OnListFragmentInteractionListener, SettingFragment.OnFragmentInteractionListener{
     val TAG: String = "AppCompatActivity"
-    var context: Context? = null
+    var mContext: Context? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        context = applicationContext
+        mContext = applicationContext
 
         if(savedInstanceState == null){
             val fragmentManager: FragmentManager = getSupportFragmentManager()
