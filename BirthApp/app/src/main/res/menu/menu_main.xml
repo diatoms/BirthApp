@@ -1,5 +1,5 @@
 <!--?xml version="1.0" encoding="utf-8"?-->
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/addButton" android:icon="@mipmap/ic_launcher_round" android:title="Add">
+    <item android:id="@+id/syncButton" android:icon="@mipmap/ic_launcher_round" android:title="@string/menu_sync">
     </item>
 </menu>
