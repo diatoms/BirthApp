@@ -106,18 +106,30 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
         private val LOADER_ID_NETWORK = 1549
     }
 
+    /**
+     * アラームをセットする
+     * @param context コンテキスト
+     * @param birthDay 誕生日
+     */
     fun setupAlarm(context: Context, birthDay: String) {
-
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ContactsProviderIntentService::class.java)
-//        intent.action = ACTION_START_NOTIFICATION_SERVICE
-//        intent.putExtra(EXTRA_CONTACT_NOTIFICATION, contact)
         val pendingIntent : PendingIntent = PendingIntent.getBroadcast(context, SecureRandom().nextInt(10000000), intent, PendingIntent.FLAG_UPDATE_CURRENT)
         alarmManager.set(AlarmManager.RTC_WAKEUP, getNextAnniversary(birthDay), pendingIntent)
     }
 
+
+    fun saveDB(name: String, birthDay: String, age: Int, requestCode: Int){
+
+    }
+
+    /**
+     * 誕生日までの日数を取得する
+     * @param birthDay: 誕生日
+     * @return 次の誕生日までの日数(ミリ秒単位)
+     */
     fun getNextAnniversary(birthDay: String): Long {
-        var year: Int = (Calendar.getInstance()).get(Calendar.YEAR) + 1
+        val year: Int = (Calendar.getInstance()).get(Calendar.YEAR) + 1
         var month: Int = 0
         var date: Int = 0
         if (containsDelimiter(birthDay)) {
@@ -133,39 +145,19 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
             birthDay.substring(4)
         }
 
-        var calenadar: Calendar = Calendar.getInstance()
+        val calenadar: Calendar = Calendar.getInstance()
         calenadar.set(year, month, date)
 
         return calenadar.timeInMillis - Calendar.getInstance().timeInMillis
-
-//        birthDay.substring(birthDay.length - 5)
-//        birthDay.substring(birthDay.length - 2)
-//
-//        val dateTimeNow = DateTime.now()
-//        val monthDayNow = MonthDay.now()
-//        val monthDayOfNextDate = MonthDay.fromDateFields(date)
-//        if (monthDayNow.isEqual(monthDayOfNextDate)) {
-//            val inputDate = DateTime(date)
-//            return dateTimeNow
-//                    .withHourOfDay(inputDate.getHourOfDay())
-//                    .withMinuteOfHour(inputDate.getMinuteOfHour())
-//                    .withSecondOfMinute(inputDate.getSe
-// condOfMinute())
-//                    .withMillisOfSecond(inputDate.getMillisOfSecond()).toDate()
-//        }
-//        if (monthDayNow.isBefore(monthDayOfNextDate))
-//            return DateTime(date).withYear(dateTimeNow.getYear()).toDate()
-//        else {
-//            val dateTimeOfNextDate = DateTime(date).withYear(dateTimeNow.getYear()).plusYears(1)
-//            return dateTimeOfNextDate.toDate()
-//        }
     }
 
     /**
-     * フォーマットチェック
-     * 戻り値true:区切り文字を含む, false:含まない
+     * 区切り文字有無チェック
+     * @param birthDay 誕生日
+     * @return true:区切り文字あり, false:区切り文字なし
      */
     fun containsDelimiter(birthDay: String) : Boolean{
+        // 日付のフォーマット定義
         val birthdayFormats = listOf(
                 SimpleDateFormat("yyyy-MM-dd", Locale.JAPANESE), SimpleDateFormat("yyyyMMdd", Locale.JAPANESE),
                 SimpleDateFormat("yyyy.MM.dd", Locale.JAPANESE), SimpleDateFormat("yy-MM-dd", Locale.JAPANESE),
@@ -174,25 +166,19 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
                 SimpleDateFormat("MMdd", Locale.JAPANESE), SimpleDateFormat("MM/dd", Locale.JAPANESE), SimpleDateFormat("MM.dd", Locale.JAPANESE)
         )
 
-        var date: Date? = null
         for (sdf in birthdayFormats) {
             try {
-                date = sdf.parse(birthDay)
-                if (date != null) {
-                    if(birthDay.matches(Regex(".*" + "-" + ".*"))) {
-                        return true
-                    } else if(birthDay.matches(Regex(".*" + "/" + ".*"))) {
-                        return true
-                    } else if(birthDay.matches(Regex(".*" + "." + ".*"))) {
-                        return true
-                    } else {
-                        return false
-                    }
+                if ((birthDay.matches(Regex(".*" + "-" + ".*")))
+                        || (birthDay.matches(Regex(".*" + "/" + ".*")))
+                        || (birthDay.matches(Regex(".*" + "." + ".*")))) {
+                    // 「-/.」の区切り文字を含む場合
+                    return true
                 }
             } catch (e: Exception) {
                 continue;
             }
         }
+        // 「-/.」の区切り文字を含まない場合
         return false;
     }
 }

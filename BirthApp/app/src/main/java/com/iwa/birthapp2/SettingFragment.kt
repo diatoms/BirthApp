@@ -53,9 +53,6 @@ class SettingFragment : Fragment() {
             param2 = it.getString(ARG_PARAM2)
         }
 
-        val intent = Intent(activity, ContactsProviderIntentService::class.java)
-        activity.startService(intent)
-
 //
 //        val c1 = GetContacts()
 //        c1?.moveToFirst()

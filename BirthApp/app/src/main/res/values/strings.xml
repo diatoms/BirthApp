@@ -4,6 +4,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="menu_sync">Sync Contacts</string>
-    <string name="dialog_permission_title"></string>
-    <string name="dialog_permission_message"></string>
+    <string name="menu_setting">Settings</string>
+    <string name="dialog_permission_title">Contacts Access</string>
+    <string name="dialog_permission_message">Allow BirthApp to synchronize with Contacts</string>
 </resources>
