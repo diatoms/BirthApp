@@ -4,7 +4,16 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
+
+
 class DBOpenHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+
+    companion object {
+        private val TAG = "DbOpenHelper"
+        private val DATABASE_NAME = "birthday.db"
+        private val SCHEDULE_TABLE_NAME = "tbl_birthday"
+        private val DATABASE_VERSION = 1
+    }
 
     override fun onCreate(db: SQLiteDatabase) {
         createTable(db)
@@ -15,21 +24,22 @@ class DBOpenHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
     }
 
     private fun createTable(db: SQLiteDatabase) {
-        // テーブル作成SQL
-        val sql = ("CREATE TABLE schedules ("
-                + " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + " name TEXT,"
-                + " birthday TEXT,"
-                + " age INTEGER,"
-                + " request_cdde INTEGER"
-                + ");")
-        db.execSQL(sql)
-    }
+        db.beginTransaction()
 
-    companion object {
-        private val TAG = "DbOpenHelper"
-        private val DATABASE_NAME = "birthday.db"
-        private val SCHEDULE_TABLE_NAME = "birthday"
-        private val DATABASE_VERSION = 1
+        try {
+            // テーブルの生成
+            val createSql = StringBuilder()
+            createSql.append("create table " + SCHEDULE_TABLE_NAME + " (")
+            createSql.append(Birthday.COLUMN_ID + " integer primary key autoincrement not null,")
+            createSql.append(Birthday.COLUMN_NAME + " text,")
+            createSql.append(Birthday.COLUMN_AGE + " Integer,")
+            createSql.append(Birthday.COLUMN_BIRTHDAY + " text")
+            createSql.append(")")
+
+            db.execSQL(createSql.toString())
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction()
+        }
     }
 }
