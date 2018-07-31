@@ -12,6 +12,9 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Context.ALARM_SERVICE
+import com.iwa.birthapp2.db.Birthday
+import com.iwa.birthapp2.db.BirthdayDAO
+import com.iwa.birthapp2.db.DBOpenHelper
 import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.time.MonthDay
@@ -81,6 +84,14 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
 //                NotificationEventReceiver.setupAlarm(this, contact)
                 Log.d("ContactsProviderService", display_name + " " + birthDay)
                 setupAlarm(applicationContext, birthDay!!)
+
+                with(Birthday()){
+//                    setId()
+                    setName(display_name)
+//                    setAge()
+                    setBirthday(birthDay)
+                    BirthdayDAO(applicationContext).save(this)
+                }
             }
             // Go to next contact
             cursor.moveToNext()

@@ -1,6 +1,7 @@
 package com.iwa.birthapp2.db
 
 import java.io.Serializable
+import java.sql.RowId
 
 class Birthday : Serializable {
     companion object {
@@ -10,10 +11,21 @@ class Birthday : Serializable {
         val COLUMN_AGE = "age"
         val COLUMN_BIRTHDAY = "birthday"
 
-        // プロパティ
         var id: Int = 0
         var name: String ?= null
         var age: String ?= null
         var birthday: String ?= null
     }
+
+    fun getId(): Int{ return id }
+    fun setId(id: Int){ Birthday.id = id }
+
+    fun getName(): String?{ return name }
+    fun setName(name: String?){ Birthday.name = name }
+
+    fun getAge(): String?{ return age }
+    fun setAge(age: String){ Birthday.age = age }
+
+    fun getBirthday(): String?{ return birthday }
+    fun setBirthday(birthday: String?){ Birthday.birthday = birthday }
 }

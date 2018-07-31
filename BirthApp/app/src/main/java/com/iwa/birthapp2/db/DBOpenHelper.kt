@@ -10,9 +10,9 @@ class DBOpenHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
 
     companion object {
         private val TAG = "DbOpenHelper"
-        private val DATABASE_NAME = "birthday.db"
-        private val SCHEDULE_TABLE_NAME = "tbl_birthday"
-        private val DATABASE_VERSION = 1
+        val DATABASE_NAME = "birthday.db"
+        val TABLE_NAME = "tbl_birthday"
+        val DATABASE_VERSION = 1
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -29,7 +29,7 @@ class DBOpenHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         try {
             // テーブルの生成
             val createSql = StringBuilder()
-            createSql.append("create table " + SCHEDULE_TABLE_NAME + " (")
+            createSql.append("create table " + TABLE_NAME + " (")
             createSql.append(Birthday.COLUMN_ID + " integer primary key autoincrement not null,")
             createSql.append(Birthday.COLUMN_NAME + " text,")
             createSql.append(Birthday.COLUMN_AGE + " Integer,")
