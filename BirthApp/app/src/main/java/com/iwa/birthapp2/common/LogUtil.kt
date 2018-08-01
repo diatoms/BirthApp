@@ -13,6 +13,12 @@ class LogUtil
             }
         }
 
+        fun warning (TAG: String, msg: String, e:Throwable) {
+            if (debugFlag) {
+                Log.w(TAG, msg, e)
+            }
+        }
+
         fun error (TAG: String, msg: String, e:Throwable) {
             if (debugFlag) {
                 Log.e(TAG, msg, e)

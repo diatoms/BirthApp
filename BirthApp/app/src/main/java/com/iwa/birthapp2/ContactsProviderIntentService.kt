@@ -12,9 +12,13 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Context.ALARM_SERVICE
+import android.database.sqlite.SQLiteDatabase
+import android.os.AsyncTask
+import com.iwa.birthapp2.common.LogUtil
 import com.iwa.birthapp2.db.Birthday
 import com.iwa.birthapp2.db.BirthdayDAO
 import com.iwa.birthapp2.db.DBOpenHelper
+import java.io.IOException
 import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.time.MonthDay
@@ -27,6 +31,8 @@ import java.util.*
  */
 
 class ContactsProviderIntentService : IntentService(ContactsProviderIntentService::class.java.simpleName), Loader.OnLoadCompleteListener<Cursor> {
+
+    val TAG: String = "ContactsProviderIntentService"
 
     // Redefined Query
     private val contentUri = ContactsContract.Data.CONTENT_URI
@@ -59,6 +65,12 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
     }
 
     override fun onLoadComplete(loader: Loader<Cursor>, cursor: Cursor) {
+        val context: Context = applicationContext
+
+        val helper = DBOpenHelper(context)
+        val db: SQLiteDatabase = helper.writableDatabase
+        db.beginTransaction()
+        val birthDaydao = BirthdayDAO()
 
         cursor.moveToFirst()
         while (!cursor.isAfterLast) {
@@ -75,22 +87,18 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
                     }
                 }
             } catch (e: Exception) {
-                Log.e(javaClass.simpleName, "Birthday can't be extract : " + e.message)
+                LogUtil.error(TAG, "Birthday can't be extract : ", e)
             } finally {
 
             }
 
             if (birthDay != null) {
-//                NotificationEventReceiver.setupAlarm(this, contact)
-                Log.d("ContactsProviderService", display_name + " " + birthDay)
-                setupAlarm(applicationContext, birthDay!!)
-
+                LogUtil.debug(TAG, "ContactsProviderService" + display_name + " " + birthDay)
                 with(Birthday()){
-//                    setId()
                     setName(display_name)
-//                    setAge()
+                    setAge(getAge(birthDay!!))
                     setBirthday(birthDay)
-                    BirthdayDAO(applicationContext).save(this)
+                    birthDaydao.save(this,db)
                 }
             }
             // Go to next contact
@@ -98,6 +106,8 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
             //TODO photo
         }
         cursor.close()
+        db.setTransactionSuccessful()
+        db.endTransaction()
 
         // Stop the cursor loader
         if (mCursorLoader != null) {
@@ -105,6 +115,10 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
             mCursorLoader!!.cancelLoad()
             mCursorLoader!!.stopLoading()
         }
+
+        // 登録ずみのアラームをキャンセル後に再登録
+        CancelAlarmTask().execute()
+        SetAlarmTask().execute()
     }
 
     override fun onDestroy() {
@@ -122,17 +136,14 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
      * @param context コンテキスト
      * @param birthDay 誕生日
      */
-    fun setupAlarm(context: Context, birthDay: String) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, ContactsProviderIntentService::class.java)
-        val pendingIntent : PendingIntent = PendingIntent.getBroadcast(context, SecureRandom().nextInt(10000000), intent, PendingIntent.FLAG_UPDATE_CURRENT)
-        alarmManager.set(AlarmManager.RTC_WAKEUP, getNextAnniversary(birthDay), pendingIntent)
-    }
-
-
-    fun saveDB(name: String, birthDay: String, age: Int, requestCode: Int){
+    fun setupAlarm() {
 
     }
+
+
+//    fun saveDB(name: String, birthDay: String, age: Int, requestCode: Int){
+//
+//    }
 
     /**
      * 誕生日までの日数を取得する
@@ -167,7 +178,7 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
      * @param birthDay 誕生日
      * @return true:区切り文字あり, false:区切り文字なし
      */
-    fun containsDelimiter(birthDay: String) : Boolean{
+    private fun containsDelimiter(birthDay: String) : Boolean{
         // 日付のフォーマット定義
         val birthdayFormats = listOf(
                 SimpleDateFormat("yyyy-MM-dd", Locale.JAPANESE), SimpleDateFormat("yyyyMMdd", Locale.JAPANESE),
@@ -191,5 +202,133 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
         }
         // 「-/.」の区切り文字を含まない場合
         return false;
+    }
+
+    /**
+     * 年齢取得
+     * @param birthDay 誕生日
+     * @return 年齢（値が不正な場合は-1を返す）
+     */
+    private fun getAge(birthDay: String): Int{
+        var age: Int = -1
+
+        getNextAnniversary(birthDay)
+        if (containsDelimiter(birthDay)) {
+            // 区切り文字あり
+            try{
+                if(birthDay.length >= 5){
+                    // 年が2桁 or 4桁区の場合
+                    if(birthDay.indexOf("-") >= 0) {
+                        age = (birthDay.substring(0, birthDay.indexOf("-"))).toInt()
+                    }
+
+                    if(birthDay.indexOf("/") >= 0) {
+                        age = (birthDay.substring(0, birthDay.indexOf("/"))).toInt()
+                    }
+
+                    if(birthDay.indexOf(".") >= 0) {
+                        age = (birthDay.substring(0, birthDay.indexOf("."))).toInt()
+                    }
+
+                    if(age < 100){
+                        // 2桁の場合は2000年以降と判断
+                        return (Calendar.getInstance()).get(Calendar.YEAR) - age - 2000
+                    } else {
+                        return (Calendar.getInstance()).get(Calendar.YEAR) - age
+                    }
+                }
+            } catch(e: NumberFormatException){
+                LogUtil.error(TAG, "誕生日データ不正" ,e)
+            }
+        } else {
+            // 区切り文字なし
+            if(birthDay.length >= 5){
+                if(birthDay.length >= 7 ){
+                    //年が4桁
+                    age = Integer.parseInt(birthDay.substring(0,4))
+                } else {
+                    //年が2桁
+                    age = Integer.parseInt(birthDay.substring(0, 2))
+                }
+
+                if(age < 100){
+                    // 2桁の場合は2000年以降と判断
+                    return (Calendar.getInstance()).get(Calendar.YEAR) - age - 2000
+                } else {
+                    return (Calendar.getInstance()).get(Calendar.YEAR) - age
+                }
+            }
+        }
+        return age
+    }
+
+
+    fun calcAge(birthday: Date, now: Date): Int {
+        val sdf = SimpleDateFormat("yyyyMMdd")
+        return (Integer.parseInt(sdf.format(now)) - Integer.parseInt(sdf.format(birthday))) / 10000
+    }
+
+
+    /**
+     * アラームセット
+     */
+    private inner class SetAlarmTask : AsyncTask<Int, Int, Int>() {
+        override fun doInBackground(vararg params: Int?): Int? {
+            val context: Context = applicationContext
+            val helper = DBOpenHelper(context)
+            val db: SQLiteDatabase = helper.readableDatabase
+            db.beginTransaction()
+
+            // 全レコードを一括取得
+            val cursor = db.query(DBOpenHelper.TABLE_NAME, arrayOf("_id","birthday"), null, null, null, null, null)
+            if (cursor.moveToFirst()) {
+                do {
+                    LogUtil.debug(TAG, cursor.getInt(0).toString() + " " + cursor.getString(1))
+                    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                    val intent = Intent(context, ContactsProviderIntentService::class.java)
+                    val pendingIntent : PendingIntent = PendingIntent.getBroadcast(context, cursor.getInt(0), intent, PendingIntent.FLAG_UPDATE_CURRENT)
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, getNextAnniversary(cursor.getString(1)), pendingIntent)
+                } while (cursor.moveToNext())
+            }
+            cursor.close()
+
+            db.setTransactionSuccessful()
+            db.endTransaction()
+            db.close()
+
+            return null
+        }
+    }
+
+
+    /**
+     * アラームキャンセル
+     */
+    private inner class CancelAlarmTask : AsyncTask<Int, Int, Int>() {
+        override fun doInBackground(vararg params: Int?): Int? {
+            val context: Context = applicationContext
+            val helper = DBOpenHelper(context)
+            val db: SQLiteDatabase = helper.readableDatabase
+            db.beginTransaction()
+
+            // 全レコードを一括取得
+            val cursor = db.query(DBOpenHelper.TABLE_NAME, arrayOf("_id","birthday"), null, null, null, null, null)
+            if (cursor.moveToFirst()) {
+                do {
+                    LogUtil.debug(TAG, cursor.getInt(0).toString() + " " + cursor.getString(1))
+                    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                    val intent = Intent(context, ContactsProviderIntentService::class.java)
+                    val pendingIntent : PendingIntent = PendingIntent.getBroadcast(context, cursor.getInt(0), intent, PendingIntent.FLAG_UPDATE_CURRENT)
+                    alarmManager.cancel(pendingIntent)
+                } while (cursor.moveToNext())
+            }
+            cursor.close()
+
+            db.setTransactionSuccessful()
+            db.endTransaction()
+            db.close()
+
+            return null
+        }
     }
 }

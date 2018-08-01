@@ -13,18 +13,18 @@ class Birthday : Serializable {
 
         var id: Int = 0
         var name: String ?= null
-        var age: String ?= null
+        var age: Int = 0
         var birthday: String ?= null
     }
 
     fun getId(): Int{ return id }
-    fun setId(id: Int){ Birthday.id = id }
+//    fun setId(id: Int){ Birthday.id = id }
 
     fun getName(): String?{ return name }
     fun setName(name: String?){ Birthday.name = name }
 
-    fun getAge(): String?{ return age }
-    fun setAge(age: String){ Birthday.age = age }
+    fun getAge(): Int{ return age }
+    fun setAge(age: Int){ Birthday.age = age }
 
     fun getBirthday(): String?{ return birthday }
     fun setBirthday(birthday: String?){ Birthday.birthday = birthday }

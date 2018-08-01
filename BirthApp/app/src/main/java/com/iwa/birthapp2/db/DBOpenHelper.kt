@@ -33,7 +33,8 @@ class DBOpenHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
             createSql.append(Birthday.COLUMN_ID + " integer primary key autoincrement not null,")
             createSql.append(Birthday.COLUMN_NAME + " text,")
             createSql.append(Birthday.COLUMN_AGE + " Integer,")
-            createSql.append(Birthday.COLUMN_BIRTHDAY + " text")
+//            createSql.append(Birthday.COLUMN_BIRTHDAY + " text")
+            createSql.append(Birthday.COLUMN_BIRTHDAY + " text," + "unique(" + Birthday.COLUMN_NAME + "," + Birthday.COLUMN_BIRTHDAY + ")")
             createSql.append(")")
 
             db.execSQL(createSql.toString())
