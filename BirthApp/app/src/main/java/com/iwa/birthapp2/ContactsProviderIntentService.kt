@@ -25,11 +25,11 @@ import java.time.MonthDay
 import java.util.*
 
 
-
 /**
- * Created by joker on 20/04/17.
+ * 電話帳連携Service
+ * 　　★年齢が一年ずれる場合があるので要修正
+ * 　　★通知を返してもらう
  */
-
 class ContactsProviderIntentService : IntentService(ContactsProviderIntentService::class.java.simpleName), Loader.OnLoadCompleteListener<Cursor> {
 
     val TAG: String = "ContactsProviderIntentService"
@@ -131,19 +131,6 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
         private val LOADER_ID_NETWORK = 1549
     }
 
-    /**
-     * アラームをセットする
-     * @param context コンテキスト
-     * @param birthDay 誕生日
-     */
-    fun setupAlarm() {
-
-    }
-
-
-//    fun saveDB(name: String, birthDay: String, age: Int, requestCode: Int){
-//
-//    }
 
     /**
      * 誕生日までの日数を取得する

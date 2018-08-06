@@ -14,11 +14,15 @@ import android.view.MenuItem
 import android.content.DialogInterface
 import android.content.Intent
 import android.support.v7.app.AlertDialog
-import android.util.Log
+import com.iwa.birthapp2.common.LogUtil
 import java.util.*
 
 
-class MainActivity : AppCompatActivity(), ItemFragment.OnListFragmentInteractionListener, SettingFragment.OnFragmentInteractionListener{
+class MainActivity : AppCompatActivity(),
+        ItemFragment.OnListFragmentInteractionListener,
+        SettingFragment.OnSettingFragmentInteractionListener,
+        CustomFragment.OnCustomFragmentInteractionListener{
+
     val TAG: String = "AppCompatActivity"
     var mContext: Context? = null
 
@@ -37,11 +41,14 @@ class MainActivity : AppCompatActivity(), ItemFragment.OnListFragmentInteraction
         }
     }
 
-    override fun onListFragmentInteraction(item: Content.ProfileItem?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun OnCustomFragmentInteractionListener(uri: Uri) {
+        //OnCustomFragmentのインターフェース
     }
-    override fun onFragmentInteraction(uri: Uri) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun onListFragmentInteraction(item: Content.ProfileItem?) {
+        //ItemFragmentのインターフェース
+    }
+    override fun OnSettingFragmentInteractionListener(uri: Uri) {
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -59,8 +66,9 @@ class MainActivity : AppCompatActivity(), ItemFragment.OnListFragmentInteraction
                         val intent = Intent(it, ContactsProviderIntentService::class.java)
                         startService(intent)
                     }
-                } else {
-                    // TODO Permission未許可の状態ではどうするか
+
+                    val progressDialog = CustomFragment.newInstance(getString(R.string.progress_dialog_message))
+                    progressDialog.show(supportFragmentManager, "Tag")
                 }
 
             //設定
@@ -93,11 +101,11 @@ class MainActivity : AppCompatActivity(), ItemFragment.OnListFragmentInteraction
                         .setMessage(resources.getString(R.string.dialog_permission_message))
                         .setPositiveButton(android.R.string.ok, DialogInterface.OnClickListener { dialog, which ->
                             ActivityCompat.requestPermissions(this@MainActivity,
-                                    arrayOf(android.Manifest.permission.READ_CONTACTS), 0)
+                                    arrayOf(android.Manifest.permission.READ_CONTACTS), REQUEST_PERMISSIONS)
                         }).create().show()
             } else {
                 // 許可ダイアログ1回目
-                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_CONTACTS), 0);
+                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_CONTACTS), REQUEST_PERMISSIONS);
             }
         }
         return result
@@ -111,18 +119,20 @@ class MainActivity : AppCompatActivity(), ItemFragment.OnListFragmentInteraction
      */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
                                             grantResults: IntArray) {
-        Log.d(TAG, "onRequestPermissionsResult() start")
-        Log.d(TAG, "requestCode: $requestCode")
-        Log.d(TAG, "permissions: " + Arrays.toString(permissions))
-        Log.d(TAG, "grantResults: " + Arrays.toString(grantResults))
+        LogUtil.debug(TAG, "onRequestPermissionsResult() start")
+        LogUtil.debug(TAG, "requestCode: $requestCode")
+        LogUtil.debug(TAG, "permissions: " + Arrays.toString(permissions))
+        LogUtil.debug(TAG, "grantResults: " + Arrays.toString(grantResults))
 
         when (requestCode) {
             REQUEST_PERMISSIONS -> {
-                Log.d(TAG, "requestCode: REQUEST_PERMISSIONS")
-                with(supportFragmentManager.beginTransaction()){
-                    replace(R.id.container, SettingFragment())
-                    addToBackStack(null)
-                    commit()
+                LogUtil.debug(TAG, "requestCode: REQUEST_PERMISSIONS")
+                if(checkPermission()){
+                    // Permission許可済み
+                    mContext.let{
+                        val intent = Intent(it, ContactsProviderIntentService::class.java)
+                        startService(intent)
+                    }
                 }
             }
         }

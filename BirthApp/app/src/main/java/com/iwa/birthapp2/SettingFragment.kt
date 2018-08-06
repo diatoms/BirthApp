@@ -9,21 +9,9 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.Toast
-import android.provider.Telephony.Mms.Addr.CONTACT_ID
-import android.provider.ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY
 import android.provider.ContactsContract.CommonDataKinds
-import android.provider.Telephony.Mms.Addr.CONTACT_ID
-import android.provider.ContactsContract.CommonDataKinds.Event.START_DATE
 import android.support.constraint.Constraints
 import android.util.Log
-import android.content.ContentResolver
-import android.content.Intent
-
-
-
-
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -34,7 +22,7 @@ private const val ARG_PARAM2 = "param2"
 /**
  * A simple [Fragment] subclass.
  * Activities that contain this fragment must implement the
- * [SettingFragment.OnFragmentInteractionListener] interface
+ * [SettingFragment.OnSettingFragmentInteractionListener] interface
  * to handle interaction events.
  * Use the [SettingFragment.newInstance] factory method to
  * create an instance of this fragment.
@@ -44,7 +32,7 @@ class SettingFragment : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
-    private var listener: OnFragmentInteractionListener? = null
+    private var listener: OnSettingFragmentInteractionListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,15 +99,15 @@ class SettingFragment : Fragment() {
 
     // TODO: Rename method, update argument and hook method into UI event
     fun onButtonPressed(uri: Uri) {
-        listener?.onFragmentInteraction(uri)
+        listener?.OnSettingFragmentInteractionListener(uri)
     }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is OnFragmentInteractionListener) {
+        if (context is OnSettingFragmentInteractionListener) {
             listener = context
         } else {
-            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
+            throw RuntimeException(context.toString() + " must implement OnCustomFragmentInteractionListener")
         }
     }
 
@@ -139,9 +127,9 @@ class SettingFragment : Fragment() {
      * (http://developer.android.com/training/basics/fragments/communicating.html)
      * for more information.
      */
-    interface OnFragmentInteractionListener {
+    interface OnSettingFragmentInteractionListener {
         // TODO: Update argument type and name
-        fun onFragmentInteraction(uri: Uri)
+        fun OnSettingFragmentInteractionListener(uri: Uri)
     }
 
     companion object {

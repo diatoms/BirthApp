@@ -4,30 +4,36 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
+import com.iwa.birthapp2.common.LogUtil
 
 
 class BirthdayDAO{
     private val TAG: String = "BirthdayDAO"
 
+    /**
+     * DB保存
+     *
+     * @param
+     * @param
+     */
     fun save(data: Birthday, db: SQLiteDatabase) {
         try {
-            var values: ContentValues = ContentValues()
+            val values = ContentValues()
             with(values) {
                 values.put(Birthday.COLUMN_NAME, data.getName())
                 values.put(Birthday.COLUMN_AGE, data.getAge())
                 values.put(Birthday.COLUMN_BIRTHDAY, data.getBirthday())
-
-                var rowId: Int = data.getId()
-                if (rowId == 0) {
-                    rowId = (db.insertOrThrow(DBOpenHelper.TABLE_NAME, null, values)).toInt()
-                } else {
-                    db.update(DBOpenHelper.TABLE_NAME, values, Birthday.COLUMN_ID + "=?", arrayOf(rowId.toString()))
-                }
             }
-        } catch(e: SQLiteException) {
 
-        }finally {
-                //          db.endTransaction()
+            val rowId: Int = data.getId()
+            if (rowId == 0) {
+                db.insertOrThrow(DBOpenHelper.TABLE_NAME, null, values)
+            } else {
+                db.update(DBOpenHelper.TABLE_NAME, values, Birthday.COLUMN_ID + "=?", arrayOf(rowId.toString()))
+            }
+
+        } catch (e: SQLiteException) {
+            LogUtil.warning(TAG, "Database save failure", e)
         }
     }
 
@@ -48,8 +54,6 @@ class BirthdayDAO{
 
     private fun getItem(cursor: Cursor): Birthday {
         val item = Birthday()
-
-//        item.setId((cursor.getLong (0)) as Int)
         item.setName(cursor.getString(1))
         item.setAge(cursor.getInt(2))
         item.setBirthday(cursor.getString(3))

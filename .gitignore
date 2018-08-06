@@ -1,0 +1,7 @@
+BirthApp/.gradle/
+BirthApp/.idea/
+BirthApp/BirthApp.iml
+BirthApp/BirthApp2.iml
+BirthApp/app/app.iml
+BirthApp/app/build/
+BirthApp/local.properties

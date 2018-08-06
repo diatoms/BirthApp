@@ -1,7 +1,6 @@
 package com.iwa.birthapp2.db
 
 import java.io.Serializable
-import java.sql.RowId
 
 class Birthday : Serializable {
     companion object {
@@ -18,7 +17,6 @@ class Birthday : Serializable {
     }
 
     fun getId(): Int{ return id }
-//    fun setId(id: Int){ Birthday.id = id }
 
     fun getName(): String?{ return name }
     fun setName(name: String?){ Birthday.name = name }
