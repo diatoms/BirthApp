@@ -65,6 +65,7 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
     }
 
     override fun onLoadComplete(loader: Loader<Cursor>, cursor: Cursor) {
+        LogUtil.debug(TAG, "onLoadComplete")
         val context: Context = applicationContext
 
         val helper = DBOpenHelper(context)
@@ -93,7 +94,7 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
             }
 
             if (birthDay != null) {
-                LogUtil.debug(TAG, "ContactsProviderService" + display_name + " " + birthDay)
+                LogUtil.debug(TAG, display_name + " " + birthDay)
                 with(Birthday()){
                     setName(display_name)
                     setAge(getAge(birthDay!!))
@@ -119,6 +120,15 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
         // 登録ずみのアラームをキャンセル後に再登録
         CancelAlarmTask().execute()
         SetAlarmTask().execute()
+        sendMessage("")
+    }
+
+    // Activityに戻すタイミングで呼ぶ
+    fun sendMessage(msg: String) {
+        val broadcast = Intent()
+        broadcast.putExtra("message", msg)
+        broadcast.action = packageName + ".ON_LOAD_COMPLETED_RECEIVER"
+        baseContext.sendBroadcast(broadcast)
     }
 
     override fun onDestroy() {
@@ -138,20 +148,27 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
      * @return 次の誕生日までの日数(ミリ秒単位)
      */
     fun getNextAnniversary(birthDay: String): Long {
-        val year: Int = (Calendar.getInstance()).get(Calendar.YEAR) + 1
         var month: Int = 0
-        var date: Int = 0
+        val date: Int = birthDay.substring(birthDay.length-2,birthDay.length).toInt()
+
         if (containsDelimiter(birthDay)) {
-            // 区切り文字あり
-            try{
-                month = Integer.parseInt((birthDay.substring(5)).substring(0, 2))
-                date = Integer.parseInt((birthDay.substring(5)).substring(3, 5))
-            } catch(e: NumberFormatException){
-                //TODO エラー時にどうするか決める
-            }
+            // 区切り文字あり(YYYY.MM.DD, YY.MM.DD, MM.DD)
+            month = birthDay.substring(birthDay.length-5,birthDay.length-3).toInt()
         } else {
-            // 区切り文字なし
-            birthDay.substring(4)
+            // 区切り文字なし(YYYYMMDD, YYMMDD, MMDD)
+            month = birthDay.substring(birthDay.length-4,birthDay.length-2).toInt()
+        }
+
+        var year: Int = (Calendar.getInstance()).get(Calendar.YEAR) + 1
+        val now_month: Int = Calendar.getInstance().get(Calendar.MONTH) + 1
+        val now_day: Int = Calendar.getInstance().get(Calendar.DATE)
+
+        if(now_month < month.toInt()){
+            year = year - 1
+        } else if(now_month == month.toInt()){
+            if(now_day < date.toInt()){
+                year = year - 1
+            }
         }
 
         val calenadar: Calendar = Calendar.getInstance()
@@ -199,60 +216,126 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
     private fun getAge(birthDay: String): Int{
         var age: Int = -1
 
-        getNextAnniversary(birthDay)
         if (containsDelimiter(birthDay)) {
-            // 区切り文字あり
-            try{
-                if(birthDay.length >= 5){
-                    // 年が2桁 or 4桁区の場合
-                    if(birthDay.indexOf("-") >= 0) {
-                        age = (birthDay.substring(0, birthDay.indexOf("-"))).toInt()
-                    }
+            // 区切り文字あり(YYYY.MM.DD, YY.MM.DD, MM.DD)
+            val day: String = birthDay.substring(birthDay.length-2,birthDay.length)
+            val month: String = birthDay.substring(birthDay.length-5,birthDay.length-3)
+            var year: String = "0"
+            if(birthDay.length > 5) {
+                // 年あり(YYYY.MM.DD, YY.MM.DD)
 
-                    if(birthDay.indexOf("/") >= 0) {
-                        age = (birthDay.substring(0, birthDay.indexOf("/"))).toInt()
-                    }
+                // 区切り文字チェック("-" or "/" or ".")
+                if (birthDay.indexOf("-") >= 0) {
+                    year = birthDay.substring(0, birthDay.indexOf("-"))
+                } else if (birthDay.indexOf("/") >= 0) {
+                    year = birthDay.substring(0, birthDay.indexOf("/"))
+                } else if (birthDay.indexOf(".") >= 0) {
+                    year = birthDay.substring(0, birthDay.indexOf("."))
+                }
 
-                    if(birthDay.indexOf(".") >= 0) {
-                        age = (birthDay.substring(0, birthDay.indexOf("."))).toInt()
-                    }
-
-                    if(age < 100){
-                        // 2桁の場合は2000年以降と判断
-                        return (Calendar.getInstance()).get(Calendar.YEAR) - age - 2000
-                    } else {
-                        return (Calendar.getInstance()).get(Calendar.YEAR) - age
+                if (year.length == 4) {
+                    // 年表示4桁
+                    age = (Calendar.getInstance()).get(Calendar.YEAR) - year.toInt()
+                } else if (year.length == 2) {
+                    // 年表示2桁
+                    age = (Calendar.getInstance()).get(Calendar.YEAR) - 1900 - year.toInt()
+                    if (age >= 100) {
+                        //100歳超えの場合は2000年代生まれとする
+                        age = age - 100
                     }
                 }
-            } catch(e: NumberFormatException){
-                LogUtil.error(TAG, "誕生日データ不正" ,e)
+
+                val now_month: Int = Calendar.getInstance().get(Calendar.MONTH) + 1
+                val now_day: Int = Calendar.getInstance().get(Calendar.DATE)
+
+                if(age != -1){
+                    if(now_month < month.toInt()){
+                        age = age - 1
+                    } else if(now_month == month.toInt()){
+                        if(now_day < day.toInt()){
+                            age = age - 1
+                        }
+                    }
+                }
+
+            } else {
+                // 年なし(MM.DD)　処理なし
             }
         } else {
-            // 区切り文字なし
-            if(birthDay.length >= 5){
-                if(birthDay.length >= 7 ){
-                    //年が4桁
-                    age = Integer.parseInt(birthDay.substring(0,4))
-                } else {
-                    //年が2桁
-                    age = Integer.parseInt(birthDay.substring(0, 2))
+            // 区切り文字なし(YYYYMMDD, YYMMDD, MMDD)
+            val day: String = birthDay.substring(birthDay.length-2,birthDay.length-1)
+            val month: String = birthDay.substring(birthDay.length-4,birthDay.length-3)
+            if(birthDay.length > 5) {
+                // 年あり(YYYYMMDD, YYMMDD)
+
+                if (birthDay.length == 8) {
+                    // 年表示4桁
+                    var year: String = birthDay.substring(0, 3)
+                    age = (Calendar.getInstance()).get(Calendar.YEAR) - year.toInt()
+                } else if (birthDay.length == 6) {
+                    // 年表示2桁
+                    var year: String = birthDay.substring(0, 1)
+                    age = (Calendar.getInstance()).get(Calendar.YEAR) - 1900 - year.toInt()
+                    if (age >= 100) {
+                        //100歳超えの場合は2000年代生まれとする
+                        age = age - 100
+                    }
                 }
 
-                if(age < 100){
-                    // 2桁の場合は2000年以降と判断
-                    return (Calendar.getInstance()).get(Calendar.YEAR) - age - 2000
-                } else {
-                    return (Calendar.getInstance()).get(Calendar.YEAR) - age
-                }
+            } else {
+                // 年なし(MM.DD)　処理なし
             }
         }
         return age
-    }
 
-
-    fun calcAge(birthday: Date, now: Date): Int {
-        val sdf = SimpleDateFormat("yyyyMMdd")
-        return (Integer.parseInt(sdf.format(now)) - Integer.parseInt(sdf.format(birthday))) / 10000
+//        getNextAnniversary(birthDay)
+//        if (containsDelimiter(birthDay)) {
+//            // 区切り文字あり
+//            try{
+//                if(birthDay.length >= 5){
+//                    // 年が2桁 or 4桁区の場合
+//                    if(birthDay.indexOf("-") >= 0) {
+//                        age = (birthDay.substring(0, birthDay.indexOf("-"))).toInt()
+//                    }
+//
+//                    if(birthDay.indexOf("/") >= 0) {
+//                        age = (birthDay.substring(0, birthDay.indexOf("/"))).toInt()
+//                    }
+//
+//                    if(birthDay.indexOf(".") >= 0) {
+//                        age = (birthDay.substring(0, birthDay.indexOf("."))).toInt()
+//                    }
+//
+//                    if(age < 100){
+//                        // 2桁の場合は2000年以降と判断
+//                        return (Calendar.getInstance()).get(Calendar.YEAR) - age - 2000
+//                    } else {
+//                        return (Calendar.getInstance()).get(Calendar.YEAR) - age
+//                    }
+//                }
+//            } catch(e: NumberFormatException){
+//                LogUtil.error(TAG, "誕生日データ不正" ,e)
+//            }
+//        } else {
+//            // 区切り文字なし
+//            if(birthDay.length >= 5){
+//                if(birthDay.length >= 7 ){
+//                    //年が4桁
+//                    age = Integer.parseInt(birthDay.substring(0,4))
+//                } else {
+//                    //年が2桁
+//                    age = Integer.parseInt(birthDay.substring(0, 2))
+//                }
+//
+//                if(age < 100){
+//                    // 2桁の場合は2000年以降と判断
+//                    return (Calendar.getInstance()).get(Calendar.YEAR) - age - 2000
+//                } else {
+//                    return (Calendar.getInstance()).get(Calendar.YEAR) - age
+//                }
+//            }
+//        }
+//        return age
     }
 
 

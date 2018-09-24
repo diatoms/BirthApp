@@ -37,6 +37,9 @@ class BirthdayDAO{
         }
     }
 
+    /**
+     * DB読み込み
+     */
     fun load(itemId: Int, db:SQLiteDatabase): Birthday? {
         var birthday: Birthday? = null
         try {

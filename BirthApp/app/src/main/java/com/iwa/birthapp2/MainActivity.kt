@@ -1,6 +1,6 @@
 package com.iwa.birthapp2
 
-import android.content.Context
+import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
@@ -11,9 +11,8 @@ import android.support.v4.app.FragmentTransaction
 import android.support.v4.content.ContextCompat
 import android.view.Menu
 import android.view.MenuItem
-import android.content.DialogInterface
-import android.content.Intent
 import android.support.v7.app.AlertDialog
+import android.widget.Toast
 import com.iwa.birthapp2.common.LogUtil
 import java.util.*
 
@@ -21,12 +20,15 @@ import java.util.*
 class MainActivity : AppCompatActivity(),
         ItemFragment.OnListFragmentInteractionListener,
         SettingFragment.OnSettingFragmentInteractionListener,
-        CustomFragment.OnCustomFragmentInteractionListener{
+        CustomFragment.OnCustomFragmentInteractionListener,
+        ActivityCompat.OnRequestPermissionsResultCallback {
 
     val TAG: String = "AppCompatActivity"
     var mContext: Context? = null
 
     var REQUEST_PERMISSIONS: Int = 111
+    var receiver:onLoadCompletedReceiver? = null
+    var progressDialog:CustomFragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,9 +68,15 @@ class MainActivity : AppCompatActivity(),
                         val intent = Intent(it, ContactsProviderIntentService::class.java)
                         startService(intent)
                     }
+                    // Receiver登録
+                    receiver = onLoadCompletedReceiver()
+                    val filter = IntentFilter()
+                    filter.addAction(packageName + ".ON_LOAD_COMPLETED_RECEIVER")
+                    registerReceiver(receiver, filter)
 
-                    val progressDialog = CustomFragment.newInstance(getString(R.string.progress_dialog_message))
-                    progressDialog.show(supportFragmentManager, "Tag")
+                    progressDialog = CustomFragment.newInstance(getString(R.string.progress_dialog_message))
+                    progressDialog?.show(supportFragmentManager, "Tag")
+                    LogUtil.debug(TAG,"同期開始")
                 }
 
             //設定
@@ -133,8 +141,34 @@ class MainActivity : AppCompatActivity(),
                         val intent = Intent(it, ContactsProviderIntentService::class.java)
                         startService(intent)
                     }
+
+                    // Receiver登録
+                    receiver = onLoadCompletedReceiver()
+                    val filter = IntentFilter()
+                    filter.addAction(packageName + ".ON_LOAD_COMPLETED_RECEIVER")
+                    registerReceiver(receiver, filter)
+
+                    progressDialog = CustomFragment.newInstance(getString(R.string.progress_dialog_message))
+                    progressDialog?.show(supportFragmentManager, "Tag")
+                    LogUtil.debug(TAG,"同期開始")
                 }
             }
+        }
+    }
+
+    inner class onLoadCompletedReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val extras = intent.extras
+            val msg = extras?.getString("message")
+
+            // Receiver解除
+            if(receiver != null){
+                unregisterReceiver(receiver)
+            }
+
+            //行いたい処理を記載
+            progressDialog?.cancel()
+            Toast.makeText(context,getString(R.string.toast_syncronized),Toast.LENGTH_SHORT).show()
         }
     }
 }

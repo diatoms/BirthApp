@@ -7,5 +7,6 @@
     <string name="menu_setting">Settings</string>
     <string name="dialog_permission_title">Contacts Access</string>
     <string name="dialog_permission_message">Allow BirthApp to synchronize with Contacts</string>
-    <string name="progress_dialog_message">同期中</string>
+    <string name="progress_dialog_message">During Synchronization</string>
+    <string name="toast_syncronized">Synchronization is complete</string>
 </resources>
