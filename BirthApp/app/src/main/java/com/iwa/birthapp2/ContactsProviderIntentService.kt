@@ -14,6 +14,7 @@ import android.content.Context
 import android.content.Context.ALARM_SERVICE
 import android.database.sqlite.SQLiteDatabase
 import android.os.AsyncTask
+import com.iwa.birthapp2.common.BirthdayUtil
 import com.iwa.birthapp2.common.LogUtil
 import com.iwa.birthapp2.db.Birthday
 import com.iwa.birthapp2.db.BirthdayDAO
@@ -151,7 +152,7 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
         var month: Int = 0
         val date: Int = birthDay.substring(birthDay.length-2,birthDay.length).toInt()
 
-        if (containsDelimiter(birthDay)) {
+        if (BirthdayUtil.containsDelimiter(birthDay)) {
             // 区切り文字あり(YYYY.MM.DD, YY.MM.DD, MM.DD)
             month = birthDay.substring(birthDay.length-5,birthDay.length-3).toInt()
         } else {
@@ -172,41 +173,11 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
         }
 
         val calenadar: Calendar = Calendar.getInstance()
-        calenadar.set(year, month, date)
+        calenadar.set(year, month - 1, date)
 
         return calenadar.timeInMillis - Calendar.getInstance().timeInMillis
     }
 
-    /**
-     * 区切り文字有無チェック
-     * @param birthDay 誕生日
-     * @return true:区切り文字あり, false:区切り文字なし
-     */
-    private fun containsDelimiter(birthDay: String) : Boolean{
-        // 日付のフォーマット定義
-        val birthdayFormats = listOf(
-                SimpleDateFormat("yyyy-MM-dd", Locale.JAPANESE), SimpleDateFormat("yyyyMMdd", Locale.JAPANESE),
-                SimpleDateFormat("yyyy.MM.dd", Locale.JAPANESE), SimpleDateFormat("yy-MM-dd", Locale.JAPANESE),
-                SimpleDateFormat("yyMMdd", Locale.JAPANESE), SimpleDateFormat("yy.MM.dd", Locale.JAPANESE),
-                SimpleDateFormat("yy/MM/dd", Locale.JAPANESE), SimpleDateFormat("MM-dd", Locale.JAPANESE),
-                SimpleDateFormat("MMdd", Locale.JAPANESE), SimpleDateFormat("MM/dd", Locale.JAPANESE), SimpleDateFormat("MM.dd", Locale.JAPANESE)
-        )
-
-        for (sdf in birthdayFormats) {
-            try {
-                if ((birthDay.matches(Regex(".*" + "-" + ".*")))
-                        || (birthDay.matches(Regex(".*" + "/" + ".*")))
-                        || (birthDay.matches(Regex(".*" + "." + ".*")))) {
-                    // 「-/.」の区切り文字を含む場合
-                    return true
-                }
-            } catch (e: Exception) {
-                continue;
-            }
-        }
-        // 「-/.」の区切り文字を含まない場合
-        return false;
-    }
 
     /**
      * 年齢取得
@@ -216,7 +187,7 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
     private fun getAge(birthDay: String): Int{
         var age: Int = -1
 
-        if (containsDelimiter(birthDay)) {
+        if (BirthdayUtil.containsDelimiter(birthDay)) {
             // 区切り文字あり(YYYY.MM.DD, YY.MM.DD, MM.DD)
             val day: String = birthDay.substring(birthDay.length-2,birthDay.length)
             val month: String = birthDay.substring(birthDay.length-5,birthDay.length-3)
@@ -350,14 +321,16 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
             db.beginTransaction()
 
             // 全レコードを一括取得
-            val cursor = db.query(DBOpenHelper.TABLE_NAME, arrayOf("_id","birthday"), null, null, null, null, null)
+            val cursor = db.query(DBOpenHelper.TABLE_NAME, arrayOf(Birthday.COLUMN_ID, Birthday.COLUMN_NAME, Birthday.COLUMN_AGE, Birthday.COLUMN_BIRTHDAY), null, null, null, null, null)
             if (cursor.moveToFirst()) {
                 do {
-                    LogUtil.debug(TAG, cursor.getInt(0).toString() + " " + cursor.getString(1))
+                    LogUtil.debug(TAG, cursor.getInt(0).toString() + " " + cursor.getString(1) + " " + cursor.getInt(2) + " " + cursor.getString(3))
                     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                    val intent = Intent(context, ContactsProviderIntentService::class.java)
+                    val intent = Intent(context, AlarmReceiver::class.java)
+                    intent.putExtra(Birthday.COLUMN_NAME, cursor.getInt(1))
+                    val time: Long = getNextAnniversary(cursor.getString(3))
                     val pendingIntent : PendingIntent = PendingIntent.getBroadcast(context, cursor.getInt(0), intent, PendingIntent.FLAG_UPDATE_CURRENT)
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, getNextAnniversary(cursor.getString(1)), pendingIntent)
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, time, pendingIntent)
                 } while (cursor.moveToNext())
             }
             cursor.close()
@@ -365,6 +338,11 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
             db.setTransactionSuccessful()
             db.endTransaction()
             db.close()
+
+//            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+//            val intent = Intent(context, AlarmReceiver::class.java)
+//            val pendingIntent : PendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+//            alarmManager.setExact(AlarmManager.RTC_WAKEUP, 1000*20, pendingIntent)
 
             return null
         }
@@ -388,6 +366,7 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
                     LogUtil.debug(TAG, cursor.getInt(0).toString() + " " + cursor.getString(1))
                     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                     val intent = Intent(context, ContactsProviderIntentService::class.java)
+                    intent.putExtra("ID",cursor.getInt(0))
                     val pendingIntent : PendingIntent = PendingIntent.getBroadcast(context, cursor.getInt(0), intent, PendingIntent.FLAG_UPDATE_CURRENT)
                     alarmManager.cancel(pendingIntent)
                 } while (cursor.moveToNext())
