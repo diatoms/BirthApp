@@ -22,7 +22,7 @@ object Content {
      */
     val ITEM_MAP: MutableMap<String, ProfileItem> = HashMap()
 
-    private val COUNT = 100
+    private val COUNT = 40
 
     init {
         // Add some sample items.

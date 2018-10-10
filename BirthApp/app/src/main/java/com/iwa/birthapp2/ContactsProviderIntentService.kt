@@ -24,6 +24,10 @@ import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.time.MonthDay
 import java.util.*
+import android.R.id.edit
+import android.content.SharedPreferences
+
+
 
 
 /**
@@ -70,10 +74,12 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
         val context: Context = applicationContext
 
         val helper = DBOpenHelper(context)
-        val db: SQLiteDatabase = helper.writableDatabase
+        var db: SQLiteDatabase = helper.readableDatabase
+        db.delete(DBOpenHelper.TABLE_NAME, null, null)
+
+        db = helper.writableDatabase
         db.beginTransaction()
         val birthDaydao = BirthdayDAO()
-
         cursor.moveToFirst()
         while (!cursor.isAfterLast) {
             id = cursor.getLong(cursor.getColumnIndex(ContactsContract.Contacts._ID))
@@ -107,6 +113,12 @@ class ContactsProviderIntentService : IntentService(ContactsProviderIntentServic
             cursor.moveToNext()
             //TODO photo
         }
+        LogUtil.debug(TAG,"DB数:" + cursor.count.toString())
+        val data = getSharedPreferences("DataSave", Context.MODE_PRIVATE)
+        val editor = data.edit()
+        editor.putInt("DB_COUNT", cursor.count)
+        editor.apply()
+
         cursor.close()
         db.setTransactionSuccessful()
         db.endTransaction()

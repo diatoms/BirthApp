@@ -20,6 +20,10 @@ import com.iwa.birthapp2.db.DBOpenHelper
 import kotlinx.android.synthetic.main.fragment_item.view.*
 import java.util.*
 import kotlin.collections.ArrayList
+import android.R.id.edit
+import android.content.SharedPreferences
+
+
 
 /**
  * [RecyclerView.Adapter] that can display a [ProfileItem] and makes a call to the
@@ -28,7 +32,8 @@ import kotlin.collections.ArrayList
  */
 class MyItemRecyclerViewAdapter(
         private val mValue: List<ProfileItem>,
-        private val mListener: OnListFragmentInteractionListener?)
+        private val mListener: OnListFragmentInteractionListener?,
+        private val context: Context)
     : RecyclerView.Adapter<MyItemRecyclerViewAdapter.ViewHolder>() {
 
     private val mOnClickListener: View.OnClickListener
@@ -76,7 +81,12 @@ class MyItemRecyclerViewAdapter(
         }
     }
 
-    override fun getItemCount(): Int = mValue.size
+    override fun getItemCount(): Int {
+        val data = context.getSharedPreferences("DataSave", Context.MODE_PRIVATE)
+        return data.getInt("DB_COUNT", 0)
+    }
+
+//    override fun getItemCount(): Int = mValue.size
 
     inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
         val mImager: ImageView = mView.user_img
